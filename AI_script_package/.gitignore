@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+.dataset_cache/
+outputs/checkpoints/
+outputs/tables/*.csv
+outputs/tables/*.json
+outputs/figures/*.png
