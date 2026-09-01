@@ -2,18 +2,27 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 
 import pandas as pd
 import torch
 
-from dataset import make_messages, open_rgb_image
+from dataset import (
+    build_visual_inputs,
+    make_messages,
+    open_rgb_image,
+)
 from model import (
     build_processor,
     load_adapter_for_inference,
     load_base_model_for_inference,
 )
-from paths import CONFIG_DIR, TABLES_DIR, ensure_output_dirs
+from paths import (
+    CONFIG_DIR,
+    TABLES_DIR,
+    ensure_output_dirs,
+)
 from utils import (
     extract_json_object,
     load_yaml,
@@ -39,36 +48,56 @@ def parse_prediction(
     raw_output: str,
 ) -> tuple[list[str], str, bool]:
 
-    parsed = extract_json_object(raw_output)
+    parsed = extract_json_object(
+        raw_output
+    )
 
     if parsed is None:
-        return [], raw_output.strip(), False
+        return (
+            [],
+            raw_output.strip(),
+            False,
+        )
 
     categories = parsed.get(
         "damage_categories",
         [],
     )
 
-    if isinstance(categories, str):
-        categories = [categories]
+    if isinstance(
+        categories,
+        str,
+    ):
+        categories = [
+            categories
+        ]
 
     normalized = []
 
     for item in (
         categories
-        if isinstance(categories, list)
+        if isinstance(
+            categories,
+            list,
+        )
         else []
     ):
 
-        category = normalize_category(
-            str(item)
+        category = (
+            normalize_category(
+                str(item)
+            )
         )
 
         if (
-            category in VALID_CATEGORIES
-            and category not in normalized
+            category
+            in VALID_CATEGORIES
+            and category
+            not in normalized
         ):
-            normalized.append(category)
+            normalized.append(
+                category
+            )
 
     description = str(
         parsed.get(
@@ -88,16 +117,19 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(
         description=(
-            "Generate Qwen3.5-4B zero-shot "
-            "or LoRA-adapter predictions."
+            "Generate Qwen3.5-4B "
+            "zero-shot or LoRA-adapter "
+            "predictions."
         )
     )
 
     parser.add_argument(
         "--config",
         type=Path,
-        default=CONFIG_DIR
-        / "qwen35_4b_24gb.yaml",
+        default=(
+            CONFIG_DIR
+            / "qwen35_4b_24gb.yaml"
+        ),
     )
 
     parser.add_argument(
@@ -173,18 +205,73 @@ def main() -> None:
         args.output_csv
         or (
             TABLES_DIR
-            / f"{run_name}_{args.split}_predictions.csv"
+            / (
+                f"{run_name}_"
+                f"{args.split}_predictions.csv"
+            )
         )
+    )
+
+    # --------------------------------------------------
+    # Week 4 visual-input settings
+    #
+    # Defaults preserve Week 2 / Week 3 behavior.
+    # --------------------------------------------------
+
+    visual_input_mode = str(
+        data_cfg.get(
+            "visual_input_mode",
+            "single_image",
+        )
+    )
+
+    num_local_crops = int(
+        data_cfg.get(
+            "num_local_crops",
+            2,
+        )
+    )
+
+    crop_fraction = float(
+        data_cfg.get(
+            "crop_fraction",
+            0.65,
+        )
+    )
+
+    print(
+        "\nVisual input mode:",
+        visual_input_mode,
+    )
+
+    if (
+        visual_input_mode
+        == "single_image"
+    ):
+        visual_image_count = 1
+
+    else:
+        visual_image_count = (
+            1 + num_local_crops
+        )
+
+    print(
+        "Images per sample:",
+        visual_image_count,
     )
 
     # --------------------------------------------------
     # Build processor
     # --------------------------------------------------
 
-    print("\nLoading processor...")
+    print(
+        "\nLoading processor..."
+    )
 
     processor = build_processor(
-        model_cfg["model_id"],
+        model_cfg[
+            "model_id"
+        ],
         min_pixels=int(
             model_cfg[
                 "min_pixels"
@@ -249,8 +336,9 @@ def main() -> None:
                 model_id=model_cfg[
                     "model_id"
                 ],
-                adapter_path=
-                    args.adapter,
+                adapter_path=(
+                    args.adapter
+                ),
                 precision=model_cfg.get(
                     "precision",
                     "bf16",
@@ -286,7 +374,19 @@ def main() -> None:
 
     rows = []
 
-    total = len(frame)
+    total = len(
+        frame
+    )
+
+    # --------------------------------------------------
+    # Week 5 efficiency measurement
+    # --------------------------------------------------
+
+    total_generation_seconds = 0.0
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.reset_peak_memory_stats()
 
     for index, (_, row) in enumerate(
         frame.iterrows(),
@@ -298,19 +398,51 @@ def main() -> None:
             f"{row['image_id']}"
         )
 
+        # ----------------------------------------------
+        # Load original image
+        # ----------------------------------------------
+
         image = open_rgb_image(
-            row["image_path"]
+            row[
+                "image_path"
+            ]
         )
 
-        messages = make_messages(
-            image,
-            target=None,
-            prompt_variant=str(
-                data_cfg.get(
-                    "prompt_variant",
-                    "baseline",
-                )
-            ),
+        # ----------------------------------------------
+        # Week 4:
+        # Build same visual inputs used in training
+        # ----------------------------------------------
+
+        visual_inputs = (
+            build_visual_inputs(
+                image,
+                visual_input_mode=(
+                    visual_input_mode
+                ),
+                num_local_crops=(
+                    num_local_crops
+                ),
+                crop_fraction=(
+                    crop_fraction
+                ),
+            )
+        )
+
+        # ----------------------------------------------
+        # Build multimodal prompt
+        # ----------------------------------------------
+
+        messages = (
+            make_messages(
+                visual_inputs,
+                target=None,
+                prompt_variant=str(
+                    data_cfg.get(
+                        "prompt_variant",
+                        "baseline",
+                    )
+                ),
+            )
         )
 
         inputs = (
@@ -346,23 +478,45 @@ def main() -> None:
         # Inference
         # ----------------------------------------------
 
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+
+        generation_start = (
+            time.perf_counter()
+        )
+
         with torch.inference_mode():
 
             generated = (
                 model.generate(
                     **inputs,
-                    max_new_tokens=
-                        args.max_new_tokens,
+                    max_new_tokens=(
+                        args.max_new_tokens
+                    ),
                     do_sample=False,
                     use_cache=True,
-                    pad_token_id=
+                    pad_token_id=(
                         processor.tokenizer
-                        .pad_token_id,
-                    eos_token_id=
+                        .pad_token_id
+                    ),
+                    eos_token_id=(
                         processor.tokenizer
-                        .eos_token_id,
+                        .eos_token_id
+                    ),
                 )
             )
+
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+
+        generation_seconds = (
+            time.perf_counter()
+            - generation_start
+        )
+
+        total_generation_seconds += (
+            generation_seconds
+        )
 
         # ----------------------------------------------
         # Decode only newly generated tokens
@@ -440,6 +594,13 @@ def main() -> None:
 
                 "raw_output":
                     raw_output,
+
+                # Week 4 metadata
+                "visual_input_mode":
+                    visual_input_mode,
+
+                "visual_image_count":
+                    visual_image_count,
             }
         )
 
@@ -465,6 +626,155 @@ def main() -> None:
 
     print(
         output_csv.resolve()
+    )
+
+    # --------------------------------------------------
+    # Week 5 efficiency report
+    # --------------------------------------------------
+
+    mean_seconds_per_image = (
+        total_generation_seconds
+        / max(total, 1)
+    )
+
+    images_per_second = (
+        total
+        / total_generation_seconds
+        if total_generation_seconds > 0
+        else 0.0
+    )
+
+    if torch.cuda.is_available():
+
+        peak_allocated_gb = (
+            torch.cuda.max_memory_allocated()
+            / 1024**3
+        )
+
+        peak_reserved_gb = (
+            torch.cuda.max_memory_reserved()
+            / 1024**3
+        )
+
+    else:
+
+        peak_allocated_gb = 0.0
+        peak_reserved_gb = 0.0
+
+    efficiency = {
+        "n_images":
+            int(total),
+
+        "total_generation_seconds":
+            float(
+                total_generation_seconds
+            ),
+
+        "mean_generation_seconds_per_image":
+            float(
+                mean_seconds_per_image
+            ),
+
+        "images_per_second":
+            float(
+                images_per_second
+            ),
+
+        "peak_allocated_gb":
+            float(
+                peak_allocated_gb
+            ),
+
+        "peak_reserved_gb":
+            float(
+                peak_reserved_gb
+            ),
+
+        "visual_input_mode":
+            visual_input_mode,
+
+        "num_local_crops":
+            int(
+                num_local_crops
+            ),
+
+        "visual_image_count":
+            int(
+                visual_image_count
+            ),
+    }
+
+    efficiency_path = (
+        output_csv.parent
+        / (
+            output_csv.stem
+            + "_efficiency.json"
+        )
+    )
+
+    with open(
+        efficiency_path,
+        "w",
+        encoding="utf-8",
+    ) as file:
+
+        json.dump(
+            efficiency,
+            file,
+            indent=2,
+        )
+
+    print()
+    print(
+        "=== WEEK 5 EFFICIENCY ==="
+    )
+
+    print(
+        "Generation seconds:",
+        round(
+            total_generation_seconds,
+            4,
+        ),
+    )
+
+    print(
+        "Seconds/image:",
+        round(
+            mean_seconds_per_image,
+            6,
+        ),
+    )
+
+    print(
+        "Images/second:",
+        round(
+            images_per_second,
+            4,
+        ),
+    )
+
+    print(
+        "Peak allocated GB:",
+        round(
+            peak_allocated_gb,
+            3,
+        ),
+    )
+
+    print(
+        "Peak reserved GB:",
+        round(
+            peak_reserved_gb,
+            3,
+        ),
+    )
+
+    print(
+        "Efficiency report:"
+    )
+
+    print(
+        efficiency_path.resolve()
     )
 
     print(

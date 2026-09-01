@@ -99,6 +99,33 @@ def main() -> None:
     )
 
     # --------------------------------------------------
+    # Week 4 visual-input settings
+    #
+    # Defaults preserve all Week 2 / Week 3 behavior.
+    # --------------------------------------------------
+
+    visual_input_mode = str(
+        data_cfg.get(
+            "visual_input_mode",
+            "single_image",
+        )
+    )
+
+    num_local_crops = int(
+        data_cfg.get(
+            "num_local_crops",
+            2,
+        )
+    )
+
+    crop_fraction = float(
+        data_cfg.get(
+            "crop_fraction",
+            0.65,
+        )
+    )
+
+    # --------------------------------------------------
     # Dataset
     # --------------------------------------------------
 
@@ -201,6 +228,11 @@ def main() -> None:
                 "baseline",
             )
         ),
+
+        # Week 4
+        visual_input_mode=visual_input_mode,
+        num_local_crops=num_local_crops,
+        crop_fraction=crop_fraction,
     )
 
     # --------------------------------------------------
@@ -254,19 +286,33 @@ def main() -> None:
     )
 
     # --------------------------------------------------
+    # Number of images supplied to model
+    # --------------------------------------------------
+
+    if visual_input_mode == "single_image":
+        visual_image_count = 1
+    else:
+        visual_image_count = (
+            1 + num_local_crops
+        )
+
+    # --------------------------------------------------
     # Report
     # --------------------------------------------------
 
     report = {
         "status": "passed",
+
         "loss": float(
             loss.detach().cpu()
         ),
+
         "input_shape": list(
             batch[
                 "input_ids"
             ].shape
         ),
+
         "trainable_token_count": int(
             batch[
                 "labels"
@@ -275,23 +321,45 @@ def main() -> None:
             .sum()
             .item()
         ),
+
         "peak_allocated_gb": round(
             peak_allocated,
             3,
         ),
+
         "peak_reserved_gb": round(
             peak_reserved,
             3,
         ),
+
         "prompt_variant": str(
             data_cfg.get(
                 "prompt_variant",
                 "baseline",
             )
         ),
+
+        # Week 4 report fields
+        "visual_input_mode": (
+            visual_input_mode
+        ),
+
+        "num_local_crops": (
+            num_local_crops
+        ),
+
+        "crop_fraction": (
+            crop_fraction
+        ),
+
+        "visual_image_count": (
+            visual_image_count
+        ),
+
         "lora_target_module_count": len(
             targets
         ),
+
         **trainable_parameter_summary(
             model
         ),

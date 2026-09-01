@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+*.pyo
+
+outputs/
+dataset/
+Dataset-Project 3-Updated/
+
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+paper/
+*.docx
+*.pdf
+
+.ipynb_checkpoints/

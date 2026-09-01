@@ -1,0 +1,44 @@
+run_name: week4_selected_crops
+seed: 2026
+
+model:
+  model_id: Qwen/Qwen3.5-4B
+  precision: bf16
+  min_pixels: 100352
+  max_pixels: 200704
+  lora_rank: 8
+  lora_alpha: 16
+  lora_dropout: 0.05
+  lora_scope: language
+
+data:
+  train_csv: outputs/tables/train.csv
+  val_csv: outputs/tables/val.csv
+  max_length: 768
+  use_assistant_mask: true
+  prompt_variant: direct_free_text
+
+  visual_input_mode: global_plus_selected
+  num_local_crops: 2
+  crop_fraction: 0.65
+
+training:
+  output_dir: outputs/checkpoints/week4_selected_crops
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 32
+  learning_rate: 0.0002
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  lr_scheduler_type: cosine
+  logging_steps: 5
+  eval_steps: 50
+  save_steps: 50
+  save_total_limit: 2
+  gradient_checkpointing: true
+  optim: paged_adamw_8bit
+  max_grad_norm: 1.0
+  tf32: true
+  report_to: [tensorboard]
+  dataloader_num_workers: 0
