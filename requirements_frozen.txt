@@ -1,0 +1,20 @@
+# Exact package versions used for the final Week 6 SHM model run.
+# Install PyTorch with CUDA 12.8 first using:
+# pip install torch==2.11.0+cu128 torchvision==0.26.0+cu128 --index-url https://download.pytorch.org/whl/cu128
+#
+# Then install this file with:
+# pip install -r requirements_frozen.txt
+
+transformers==5.15.0
+accelerate==1.14.0
+peft==0.20.0
+bitsandbytes==0.50.1
+safetensors==0.8.0
+pandas==3.0.5
+numpy==2.4.6
+Pillow==12.3.0
+scikit-learn==1.9.0
+PyYAML==6.0.3
+matplotlib==3.11.1
+nltk==3.10.3
+tensorboard==2.21.0
