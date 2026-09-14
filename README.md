@@ -754,7 +754,7 @@ The packaged `model_adapter` contains the fine-tuned LoRA adapter and associated
 The final competition submission should provide one shareable Google Drive or Baidu Cloud link containing the reproduction package, including the dataset, final adapter, frozen split files, and required metadata.
 
 ```text
-REPRODUCTION_LINK: TO_BE_ADDED_BEFORE_FINAL_SUBMISSION
+REPRODUCTION_LINK: https://drive.google.com/file/d/1TT9f4uLuZM1mWnhoLloqP5cdGSNyFUOW/view?usp=sharing
 ```
 
 Replace the placeholder above with the final tested sharing link before submission.
