@@ -10,7 +10,55 @@ The final system uses Qwen3.5-4B with QLoRA fine-tuning to predict:
 
 The final primary model is the validation-selected V1-direct single-image Qwen3.5-4B QLoRA model.
 
-## Project Structure
+## Repository and Release Package Structure
+
+This Git repository contains the source code, experiment configurations, and reproducibility instructions for the project.
+
+A normal Git clone does not include the competition dataset, generated outputs, trained model adapter, or paper files because these large/generated artifacts are intentionally excluded from Git.
+
+### Git Repository
+
+```text
+SHM_project_3/
+├── configs/
+│   ├── final_model.yaml
+│   ├── qwen35_4b_16gb.yaml
+│   ├── qwen35_4b_24gb.yaml
+│   ├── qwen35_4b_48gb.yaml
+│   ├── week3_*.yaml
+│   ├── week4_*.yaml
+│   └── week5_*.yaml
+├── src/
+│   ├── check_environment.py
+│   ├── data_processing.py
+│   ├── dataset.py
+│   ├── evaluate.py
+│   ├── evaluate_resnet18_baseline.py
+│   ├── evaluate_resnet18_test.py
+│   ├── export_submission.py
+│   ├── model.py
+│   ├── paths.py
+│   ├── predict.py
+│   ├── prompts.py
+│   ├── smoke_test.py
+│   ├── train.py
+│   ├── train_resnet18_baseline.py
+│   ├── utils.py
+│   ├── visualize.py
+│   └── __init__.py
+├── week4_*.py
+├── week5_*.py
+├── README.md
+├── requirements.txt
+├── requirements_frozen.txt
+└── LICENSE
+```
+
+The Week 4 and Week 5 scripts reproduce the ablation studies, comparison tables, subgroup analyses, and figures reported during model development.
+
+### Reproduction Release Package
+
+The separate reproduction package contains the large artifacts that are intentionally not stored in Git:
 
 ```text
 release_candidate_1/
@@ -45,27 +93,14 @@ release_candidate_1/
 │   ├── train_results.json
 │   └── PORTABLE_SPLITS_NOTE.md
 ├── src/
-│   ├── check_environment.py
-│   ├── data_processing.py
-│   ├── dataset.py
-│   ├── evaluate.py
-│   ├── evaluate_resnet18_baseline.py
-│   ├── evaluate_resnet18_test.py
-│   ├── export_submission.py
-│   ├── model.py
-│   ├── paths.py
-│   ├── predict.py
-│   ├── prompts.py
-│   ├── smoke_test.py
-│   ├── train.py
-│   ├── train_resnet18_baseline.py
-│   ├── utils.py
-│   ├── visualize.py
-│   └── __init__.py
 ├── README.md
 ├── requirements.txt
 └── requirements_frozen.txt
 ```
+
+To reproduce inference or evaluation from a Git clone, obtain the competition reproduction package containing the dataset, packaged final adapter, and frozen split files.
+
+The final shareable reproduction link will be provided with the competition submission.
 
 ## Dataset Split
 
@@ -209,6 +244,16 @@ The exact remaining package versions are stored in:
 requirements_frozen.txt
 ```
 
+### Step 3 — Install NLTK Resources Required for METEOR
+
+Run:
+
+```bash
+python -m nltk.downloader wordnet omw-1.4
+```
+
+These resources are required by `src/evaluate.py` for METEOR evaluation.
+
 ### Alternative General Installation
 
 For a less strict installation, project dependencies can also be installed using:
@@ -270,7 +315,13 @@ outputs/tables/environment_report.json
 
 Some machines may display a conservative recommendation from the environment checker for 16 GB VRAM. The frozen final configuration nevertheless trained and ran successfully on the NVIDIA RTX 2000 Ada Generation 16 GB GPU used for the final experiment.
 
+When `src/check_environment.py` is run from a Git clone before the reproduction package is copied into place, `description_exists` and `image_dir_exists` may correctly appear as `False`. This is expected because the competition dataset is intentionally excluded from Git. Those checks should become `True` when the release-package `dataset/` directory is present at the project root.
+
 ## Dataset
+
+The Project 3 competition dataset was supplied to registered participants by the competition organizers. It contains 1,200 structural-damage images and corresponding text descriptions.
+
+The dataset is intentionally not committed to Git. For exact reproduction, use the dataset copy included in the competition reproduction package or the final shareable reproduction link supplied with the submission.
 
 The release package contains:
 
@@ -535,6 +586,8 @@ outputs/tables/submission.json
 
 ## Submission Validation
 
+`src/export_submission.py` converts the prediction CSV into the required competition JSON structure. After export, the final file should also be checked for unique image IDs, legal category names, required fields, valid JSON, and nonempty descriptions.
+
 The final submission JSON was validated successfully.
 
 Results:
@@ -660,6 +713,20 @@ The internal-test set must not be used for:
 
 The final test results are evaluation evidence only.
 
+## External Resources and Citations
+
+This project uses the following external resources and they should be cited in the submitted paper:
+
+- **IC-SHM 2026 Project 3 dataset** — the competition-provided dataset containing 1,200 structural-damage images and corresponding text descriptions. The competition materials require the reproduction dataset to be supplied to the organizers through a shareable file link.
+- **Qwen/Qwen3.5-4B** — pretrained multimodal backbone loaded through Hugging Face.
+- **LoRA / PEFT** — parameter-efficient fine-tuning framework used for language-side adaptation.
+- **bitsandbytes** — 4-bit quantization support used for QLoRA training and inference.
+- **PyTorch and Hugging Face Transformers** — primary deep-learning and model-loading libraries.
+
+The repository itself is distributed under the MIT License in `LICENSE`.
+
+The competition document does not state an explicit redistribution license for the Project 3 dataset. Therefore, this README does not claim a dataset license. The dataset should be shared only through the competition reproduction workflow or as otherwise permitted by the organizers.
+
 ## Notes
 
 Some environments may display non-fatal warnings related to:
@@ -679,6 +746,16 @@ The Qwen backbone is loaded through Hugging Face when it is not already availabl
 Internet access may therefore be required the first time the base Qwen3.5-4B model is downloaded.
 
 The packaged `model_adapter` contains the fine-tuned LoRA adapter and associated tokenizer/processor configuration, but not a second full copy of the multi-gigabyte Qwen3.5-4B backbone.
+
+### Shareable Reproduction Link
+
+The final competition submission should provide one shareable Google Drive or Baidu Cloud link containing the reproduction package, including the dataset, final adapter, frozen split files, and required metadata.
+
+```text
+REPRODUCTION_LINK: TO_BE_ADDED_BEFORE_FINAL_SUBMISSION
+```
+
+Replace the placeholder above with the final tested sharing link before submission.
 
 ## Final System Summary
 
