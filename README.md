@@ -717,16 +717,18 @@ The final test results are evaluation evidence only.
 
 This project uses the following external resources and they should be cited in the submitted paper:
 
-- **IC-SHM 2026 Project 3 dataset** — the competition-provided dataset containing 1,200 structural-damage images and corresponding text descriptions. The competition materials require the reproduction dataset to be supplied to the organizers through a shareable file link.
-- **Qwen/Qwen3.5-4B** — pretrained multimodal backbone loaded through Hugging Face.
-- **LoRA / PEFT** — parameter-efficient fine-tuning framework used for language-side adaptation.
-- **bitsandbytes** — 4-bit quantization support used for QLoRA training and inference.
-- **PyTorch and Hugging Face Transformers** — primary deep-learning and model-loading libraries.
+- **IC-SHM 2026 Project 3 dataset** — competition-provided dataset containing 1,200 structural-damage images and corresponding text descriptions. The competition materials require the reproduction dataset to be supplied to the organizers through a shareable file link.
+- **Qwen/Qwen3.5-4B** — pretrained multimodal backbone loaded through Hugging Face; Apache-2.0 license.
+- **Hugging Face Transformers** — model loading and multimodal inference framework; Apache-2.0 license.
+- **Hugging Face PEFT** — LoRA / parameter-efficient fine-tuning framework used for language-side adaptation; Apache-2.0 license.
+- **bitsandbytes** — 4-bit quantization support used for QLoRA training and inference; MIT license.
+- **PyTorch** — primary deep-learning framework; distributed under a BSD-style license.
 
 The repository itself is distributed under the MIT License in `LICENSE`.
 
-The competition document does not state an explicit redistribution license for the Project 3 dataset. Therefore, this README does not claim a dataset license. The dataset should be shared only through the competition reproduction workflow or as otherwise permitted by the organizers.
+The IC-SHM 2026 competition materials do not state an explicit redistribution license for the Project 3 dataset. Therefore, this README does not claim a dataset license. The dataset should be shared only through the competition reproduction workflow or as otherwise permitted by the organizers.
 
+The submitted paper should cite the Qwen model, PEFT/LoRA methodology, relevant quantization work, software frameworks used, and the IC-SHM 2026 competition dataset/source.
 ## Notes
 
 Some environments may display non-fatal warnings related to:
