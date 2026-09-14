@@ -10,28 +10,76 @@ import torch
 from paths import DESCRIPTION_PATH, IMAGE_DIR, TABLES_DIR, ensure_output_dirs
 from utils import save_json
 
-PACKAGES = ["torch", "transformers", "accelerate", "peft", "bitsandbytes", "pandas", "scikit-learn"]
+
+PACKAGES = [
+    "torch",
+    "transformers",
+    "accelerate",
+    "peft",
+    "bitsandbytes",
+    "pandas",
+    "scikit-learn",
+]
 
 
 def recommendation(vram_gb: float) -> str:
+    """
+    Return a practical GPU-memory recommendation.
+
+    Consumer/professional GPUs advertised as 16 GB may report slightly
+    less than 16 GiB to PyTorch. Treat GPUs reporting at least 15.5 GiB
+    as the 16 GB class.
+
+    The final project configuration was successfully trained and tested
+    on an NVIDIA RTX 2000 Ada Generation GPU reporting approximately
+    16 GB of VRAM.
+    """
+
     if vram_gb < 12:
-        return "Not recommended. Use a cloud GPU with at least 16 GB, preferably 24 GB."
-    if vram_gb < 16:
-        return "Possible only with aggressive pixel reduction and CPU offload; not recommended for routine training."
+        return (
+            "Not recommended. Use a cloud GPU with at least "
+            "16 GB, preferably 24 GB."
+        )
+
+    if vram_gb < 15.5:
+        return (
+            "Possible with aggressive pixel reduction and memory-saving "
+            "techniques; a 16 GB or larger GPU is recommended."
+        )
+
     if vram_gb < 24:
-        return "Low-memory QLoRA: batch 1, gradient checkpointing, max_pixels around 200k-300k."
+        return (
+            "Suitable for the tested low-memory QLoRA configuration: "
+            "batch size 1, gradient checkpointing, and reduced max_pixels."
+        )
+
     if vram_gb < 48:
-        return "Recommended QLoRA configuration: batch 1, max_pixels around 400k-600k."
-    return "Comfortable for higher-resolution QLoRA or non-quantized LoRA experiments."
+        return (
+            "Recommended QLoRA configuration: batch size 1 with "
+            "higher-resolution image settings where appropriate."
+        )
+
+    return (
+        "Comfortable for higher-resolution QLoRA or "
+        "non-quantized LoRA experiments."
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Check GPU and project paths.")
-    parser.add_argument("--output", type=Path, default=TABLES_DIR / "environment_report.json")
+    parser = argparse.ArgumentParser(
+        description="Check GPU and project paths."
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=TABLES_DIR / "environment_report.json",
+    )
     args = parser.parse_args()
+
     ensure_output_dirs()
 
     package_versions = {}
+
     for package in PACKAGES:
         try:
             package_versions[package] = importlib.metadata.version(package)
@@ -48,9 +96,11 @@ def main() -> None:
         "image_dir_exists": IMAGE_DIR.is_dir(),
         "cuda_available": torch.cuda.is_available(),
     }
+
     if torch.cuda.is_available():
         properties = torch.cuda.get_device_properties(0)
         vram_gb = properties.total_memory / 1024**3
+
         report.update(
             {
                 "gpu_name": properties.name,
@@ -60,10 +110,14 @@ def main() -> None:
                 "recommendation": recommendation(vram_gb),
             }
         )
+
     else:
-        report["recommendation"] = "CUDA GPU not detected; training is not practical on CPU."
+        report["recommendation"] = (
+            "CUDA GPU not detected; training is not practical on CPU."
+        )
 
     save_json(report, args.output)
+
     print(report)
     print(f"Report written to: {args.output.resolve()}")
 
