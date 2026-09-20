@@ -27,6 +27,10 @@ VISION_MARKERS = (
     "vision_tower",
     "vision_model",
 )
+MERGER_MARKERS = (
+    "merger",
+    "projector",
+)
 
 OUTPUT_MARKERS = (
     "lm_head",
@@ -95,18 +99,25 @@ def find_lora_target_modules(
 ) -> list[str]:
 
     """
-    Return exact linear-module names.
+    Return exact linear-module names for LoRA.
 
-    By default, vision-related modules are excluded
-    so LoRA is applied only to the language side.
+    Supported scopes:
+    - language: language-side LoRA only
+    - language_merger: language + visual merger LoRA
+    - language_vision_merger: language + vision + merger LoRA
+    - all: backward-compatible alias for full multimodal LoRA
     """
 
     if scope not in {
         "language",
+        "language_merger",
+        "language_vision_merger",
         "all",
     }:
         raise ValueError(
-            "lora scope must be 'language' or 'all'."
+            "lora scope must be 'language', "
+            "'language_merger', "
+            "'language_vision_merger', or 'all'."
         )
 
     module_types = _linear_module_types()
@@ -129,14 +140,34 @@ def find_lora_target_modules(
         ):
             continue
 
-        if (
-            scope == "language"
-            and any(
-                marker in lower
-                for marker in VISION_MARKERS
-            )
-        ):
-            continue
+        is_merger = any(
+            marker in lower
+            for marker in MERGER_MARKERS
+        )
+
+        is_visual_namespace = any(
+            marker in lower
+            for marker in VISION_MARKERS
+        )
+
+        is_vision_backbone = (
+            is_visual_namespace
+            and not is_merger
+        )
+
+        if scope == "language":
+            if is_visual_namespace:
+                continue
+
+        elif scope == "language_merger":
+            if is_vision_backbone:
+                continue
+
+        elif scope in {
+            "language_vision_merger",
+            "all",
+        }:
+            pass
 
         targets.append(name)
 

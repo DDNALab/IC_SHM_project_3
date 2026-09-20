@@ -13,3 +13,4 @@ PyYAML>=6.0
 matplotlib>=3.9
 nltk>=3.9
 tensorboard>=2.18
+gradio>=6.28.0

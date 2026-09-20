@@ -359,6 +359,19 @@ def main() -> None:
         "lora_target_module_count": len(
             targets
         ),
+	"vision_lora_targets": [
+    		name for name in targets
+    		if any(
+        		marker in name.lower()
+        		for marker in (
+            			"visual",
+            			"vision",
+            			"image_encoder",
+            			"vision_tower",
+            			"vision_model",
+        		)
+    		)
+	],
 
         **trainable_parameter_summary(
             model
