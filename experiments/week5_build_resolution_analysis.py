@@ -10,7 +10,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import MultiLabelBinarizer
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TABLES = PROJECT_ROOT / "outputs" / "tables"
 
 sys.path.insert(

@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TABLES = PROJECT_ROOT / "outputs" / "tables"
 
 
