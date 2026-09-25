@@ -15,4 +15,7 @@ paper/
 *.docx
 *.pdf
 
+*.pptx
+*.mp4
+
 .ipynb_checkpoints/
