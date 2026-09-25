@@ -14,21 +14,29 @@ The final primary model is the validation-selected V1-direct single-image Qwen3.
 
 This Git repository contains the source code, experiment configurations, and reproducibility instructions for the project.
 
-A normal Git clone does not include the competition dataset, generated outputs, trained model adapter, or paper files because these large/generated artifacts are intentionally excluded from Git.
+A normal Git clone does not include the competition dataset, generated outputs, trained model adapter, paper/documentation files, PowerPoint slides, or presentation video. These large, generated, or submission-specific artifacts are intentionally excluded from the code repository and are handled separately in the competition reproduction/submission package.
 
 ### Git Repository
 
 ```text
-SHM_project_3/
+SHM_repo_reference/
 ├── configs/
 │   ├── final_model.yaml
+│   ├── language_merger.yaml
 │   ├── qwen35_4b_16gb.yaml
 │   ├── qwen35_4b_24gb.yaml
 │   ├── qwen35_4b_48gb.yaml
+│   ├── qwen35_4b_pixel_test.yaml
+│   ├── qwen35_9b.yaml
+│   ├── vision_all_lora.yaml
 │   ├── week3_*.yaml
 │   ├── week4_*.yaml
 │   └── week5_*.yaml
+├── experiments/
+│   ├── week4_*.py
+│   └── week5_*.py
 ├── src/
+│   ├── app.py
 │   ├── check_environment.py
 │   ├── data_processing.py
 │   ├── dataset.py
@@ -46,15 +54,23 @@ SHM_project_3/
 │   ├── utils.py
 │   ├── visualize.py
 │   └── __init__.py
-├── week4_*.py
-├── week5_*.py
+├── outputs/
+│   ├── checkpoints/
+│   ├── figures/
+│   └── tables/
+├── .gitattributes
+├── .gitignore
+├── LICENSE
 ├── README.md
 ├── requirements.txt
-├── requirements_frozen.txt
-└── LICENSE
+└── requirements_frozen.txt
 ```
 
-The Week 4 and Week 5 scripts reproduce the ablation studies, comparison tables, subgroup analyses, and figures reported during model development.
+The `experiments/` directory contains the Week 4 and Week 5 scripts used to reproduce ablation studies, comparison tables, subgroup analyses, diagnostic analyses, and figures from model development.
+
+The `src/` directory contains the core preprocessing, training, prediction, evaluation, export, environment-checking, and interactive demo code.
+
+The `outputs/` directory is intentionally excluded from normal Git tracking because it can contain generated tables, figures, and model checkpoints. The lightweight repository may therefore contain empty output subdirectories or only small diagnostic files depending on the local checkout.
 
 ### Reproduction Release Package
 
@@ -713,6 +729,12 @@ The internal-test set must not be used for:
 
 The final test results are evaluation evidence only.
 
+## Repository Scope
+
+This Git repository is the reproducible code repository. Submission-specific artifacts such as the paper, documentation, PowerPoint slides, and presentation video are kept outside the repository unless the project advisor or competition submission instructions explicitly require them to be committed.
+
+The separate reproduction package contains the dataset, final adapter, frozen split files, final predictions, metrics, and metadata required to reproduce the reported results.
+
 ## External Resources and Citations
 
 This project uses the following external resources and they should be cited in the submitted paper:
@@ -757,7 +779,23 @@ The final competition submission should provide one shareable Google Drive or Ba
 REPRODUCTION_LINK: https://drive.google.com/file/d/1TT9f4uLuZM1mWnhoLloqP5cdGSNyFUOW/view?usp=sharing
 ```
 
-Replace the placeholder above with the final tested sharing link before submission.
+Verify the sharing permissions from a separate account before final submission.
+
+## Interactive Demo
+
+The repository includes an optional Gradio interface for interactive structural-damage diagnosis:
+
+```bash
+python src/app.py
+```
+
+The demo loads the same final Qwen3.5-4B language-adapted QLoRA model configuration used for inference and returns:
+
+- predicted damage categories;
+- a generated structural-damage description;
+- inference status and runtime.
+
+The demo is intended for presentation and qualitative inspection. It does not replace the command-line prediction and evaluation workflow used for reproducibility.
 
 ## Final System Summary
 
